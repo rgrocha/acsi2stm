@@ -24,7 +24,6 @@ dmahigh	equ	dma+5
 dmamid	equ	dma+7
 dmalow	equ	dma+9
 gpip	equ	$fffffa01
-flock	equ	$43e                    ; Floppy access semaphore
 
 savereg	macro
 	; Save registers on stack
