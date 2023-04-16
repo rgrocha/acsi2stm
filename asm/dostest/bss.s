@@ -14,11 +14,14 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+drvmask	ds.l	1                       ; Available drives
+
 ; Drive selection
-prvdrv	ds.w	1                       ; Previous drive
 drive	ds.w	1                       ; Drive to test
-drvmask	ds.l	1                       ; Drive mask
 drvlttr	ds.w	1                       ; Drive letter
+
+refdrv	ds.w	1                       ; Reference drive
+reflttr	ds.w	1                       ; Reference drive letter
 
 ; Statistics
 success	ds.w	1                       ; Successful tests

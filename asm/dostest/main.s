@@ -15,55 +15,81 @@
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 main:
+	gemdos	Dgetdrv,2               ; Query drive mask
+	move.l	d0,-(sp)                ;
+	gemdos	Dsetdrv,6               ;
+	move.l	d0,drvmask              ;
+	
 	print	drvltrq                 ; Welcome screen. Ask for a drive letter
-.ltrq	gemdos	Cconis,2                ; Flush keyboard buffer
-	tst.w	d0                      ;
-	bne.b	.ltrq                   ;
-	gemdos	Cnecin,2                ; Read drive letter
+	bsr.b	.ltrq                   ;
 
-	cmp.b	#$1b,d0                 ; Exit if pressed Esc
-	bne.b	.nesc                   ;
-	rts	                        ;
-
-.nesc	cmp.b	#'a',d0                 ; Change to upper case
-	bmi.b	.upper                  ;
-	add.b	#'A'-'a',d0             ;
-
-.upper	sub.b	#'A',d0                 ; Transform to id
-	and.w	#$00ff,d0               ;
-
-	cmp.w	#26,d0                  ; Check if it is a valid letter
-	bhs.b	.ltrq                   ; Not a letter: try again
-
-	move.w	d0,drvlttr              ; Store wanted drive letter
-	moveq	#1,d1                   ;
-	lsl.l	d1,d0                   ;
-	move.l	d1,drvmask              ; Store drive mask
+	move.w	d0,drive                ; Store wanted drive letter
 	add.b	#'A',d0                 ;
 	move.w	d0,drvlttr              ; Store drive letter
 
-	gemdos	Dgetdrv,2               ; Get current drive
-	move.w	d0,prvdrv               ;
-
-	move.w	d0,-(sp)                ; Switch to wanted drive
-	gemdos	Dsetdrv,4               ;
-
-	move.l	drvmask,d1              ; Check if the drive actually exists
-	and.l	d0,d1                   ;
-	bne.b	.drvok                  ;
-
-	move.w	prvdrv,-(sp)            ; Roll back
-	gemdos	Dsetdrv,4               ;
-	bra.w	.ltrq                   ; Select another drive letter
-
-.drvok	print	usedrv                  ; Print selected drive letter
+	print	usedrv                  ; Print selected drive letter
 	move.w	drvlttr,-(sp)           ;
+	gemdos	Cconout,4               ;
+	print	usedrv2                 ;
+
+	print	refltrq                 ; Ask for a reference drive letter
+	bsr.b	.ltrq                   ;
+
+	move.w	d0,refdrv               ; Store wanted drive letter
+	add.b	#'A',d0                 ;
+	move.w	d0,reflttr              ; Store drive letter
+
+	print	usedrv                  ; Print selected drive letter
+	move.w	reflttr,-(sp)           ;
 	gemdos	Cconout,4               ;
 	print	usedrv2                 ;
 
 	; Do the actual tests
 	bsr.w	unkdrive
 
+	rts
+
+.ltrq	gemdos	Cconis,2                ; Flush keyboard buffer
+	tst.w	d0                      ;
+	bne.b	.ltrq                   ;
+	gemdos	Cnecin,2                ; Read drive letter
+
+	move.w	d0,d3
+	cmp.b	#$1b,d3                 ; Exit if pressed Esc
+	bne.b	.nesc                   ;
+	rts	                        ;
+
+.nesc	cmp.b	#'a',d3                 ; Change to upper case
+	bmi.b	.upper                  ;
+	add.b	#'A'-'a',d3             ;
+
+.upper	sub.b	#'A',d3                 ; Transform to id
+	and.w	#$00ff,d3               ;
+
+	cmp.w	#26,d3                  ; Check if it is a valid letter
+	bhs.b	.ltrq                   ; Not a letter: try again
+
+	move.l	drvmask,d1              ; Check if the drive actually exists
+	btst	d3,d1                   ;
+	beq.b	.ltrq                   ;
+
+	moveq	#0,d0                   ; Return drive letter
+	move.b	d3,d0                   ;
+
+	rts	                        ; Success
+
+
+testok:
+	move.w	success,d0
+	addq	#1,d0
+	move.w	d0,success
+	print	succss
+	rts
+
+testfailed:
+	move.w	failed,d0
+	addq	#1,d0
+	move.w	d0,failed
 	rts
 
 drvltrq	dc.b	'GEMDOS file functions tester v'
@@ -81,6 +107,7 @@ drvltrq	dc.b	'GEMDOS file functions tester v'
 usedrv	dc.b	13,10,'Testing on drive ',0
 usedrv2	dc.b	':',13,10,0
 
+succss	dc.b	' -> successful',13,10,0
 	even
 
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80
