@@ -19,8 +19,7 @@
 unkdrive:
 	print	.desc
 
-	move.w	prvdrv,-(sp)            ; Start on previous drive
-	gemdos	Dsetdrv,2               ;
+	move.l	drvmask,d0              ; Load drive mask
 
 	moveq	#2,d1                   ; Search for a non-existing drive
 .nxtdrv	btst	d1,d0                   ;
@@ -36,14 +35,18 @@ unkdrive:
 
 .drvok	move.w	d1,-(sp)                ; Try to switch to the non-existing
 	gemdos	Dsetdrv,2               ; drive
-	tst.l	d0
 
-	bmi.b	.err                    ; Should not return an error code
-
+	move.l	drvmask,d1              ; TOS must return drive mask in any case
+	cmp.l	d1,d0                   ;
+	bne.b	.err                    ;
 
 	bsr.w	testok                  ; Test successful
-.exit	move.w	prvdrv,-(sp)            ; Restore current drive
+.exit	move.w	drive,-(sp)             ; Switch back to test drive
 	gemdos	Dsetdrv,2               ;
+
+	move.l	drvmask,d1              ; TOS must return drive mask in any case
+	cmp.l	d1,d0                   ;
+	bne.b	.err                    ;
 
 	rts	                        ; End of test
 	

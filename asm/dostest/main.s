@@ -23,6 +23,10 @@ main:
 	print	drvltrq                 ; Welcome screen. Ask for a drive letter
 	bsr.b	.ltrq                   ;
 
+	cmp.w	#$ffff,d0               ; If pressed escape
+	bne.b	.nesc                   ;
+	rts	                        ; Exit program
+.nesc
 	move.w	d0,drive                ; Store wanted drive letter
 	add.b	#'A',d0                 ;
 	move.w	d0,drvlttr              ; Store drive letter
@@ -54,27 +58,24 @@ main:
 	bne.b	.ltrq                   ;
 	gemdos	Cnecin,2                ; Read drive letter
 
-	move.w	d0,d3
-	cmp.b	#$1b,d3                 ; Exit if pressed Esc
+	cmp.b	#$1b,d0                 ; Exit if pressed Esc
 	bne.b	.nesc                   ;
+	moveq	#-1,d0                  ; Return invalid drive
 	rts	                        ;
 
-.nesc	cmp.b	#'a',d3                 ; Change to upper case
+.nesc	cmp.b	#'a',d0                 ; Change to upper case
 	bmi.b	.upper                  ;
-	add.b	#'A'-'a',d3             ;
+	add.b	#'A'-'a',d0             ;
 
-.upper	sub.b	#'A',d3                 ; Transform to id
-	and.w	#$00ff,d3               ;
+.upper	sub.b	#'A',d0                 ; Transform to id
+	and.w	#$00ff,d0               ;
 
-	cmp.w	#26,d3                  ; Check if it is a valid letter
+	cmp.w	#26,d0                  ; Check if it is a valid letter
 	bhs.b	.ltrq                   ; Not a letter: try again
 
 	move.l	drvmask,d1              ; Check if the drive actually exists
-	btst	d3,d1                   ;
+	btst	d0,d1                   ;
 	beq.b	.ltrq                   ;
-
-	moveq	#0,d0                   ; Return drive letter
-	move.b	d3,d0                   ;
 
 	rts	                        ; Success
 
