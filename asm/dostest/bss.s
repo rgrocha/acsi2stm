@@ -17,14 +17,15 @@
 drvmask	ds.l	1                       ; Available drives
 
 ; Drive selection
-drive	ds.w	1                       ; Drive to test
-drvlttr	ds.w	1                       ; Drive letter
-
+drive	ds.w	1                       ; Drive to apply the test to
+tstdrv	ds.w	1                       ; Drive to test
 refdrv	ds.w	1                       ; Reference drive
-reflttr	ds.w	1                       ; Reference drive letter
 
 ; Statistics
 success	ds.w	1                       ; Successful tests
 failed	ds.w	1                       ; Failed tests
+
+; Stack pointer at the beginning of main, used by abort
+mainsp	ds.l	1
 
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80

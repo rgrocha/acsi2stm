@@ -16,7 +16,7 @@
 
 ; Tests Gsetdrv on an unknown drive
 
-unkdrive:
+tdsetdrv:
 	print	.desc
 
 	move.l	drvmask,d0              ; Load drive mask
@@ -27,33 +27,39 @@ unkdrive:
 	addq	#1,d1                   ;
 	cmp.w	#26,d1                  ;
 	bhs.b	.ndrv                   ;
-	bra.b	.nxtdrv                 ;
+	bra	.nxtdrv                 ;
 
 .ndrv	print	.nfree                  ; No drive free
 	bsr.w	testfailed              ;
-	bra.w	.exit                   ;
+	bra	.exit                   ;
 
 .drvok	move.w	d1,-(sp)                ; Try to switch to the non-existing
-	gemdos	Dsetdrv,2               ; drive
+	gemdos	Dsetdrv,4               ; drive
 
-	move.l	drvmask,d1              ; TOS must return drive mask in any case
-	cmp.l	d1,d0                   ;
+	cmp.l	drvmask,d0              ; TOS must return drive mask in any case
 	bne.b	.err                    ;
 
-	bsr.w	testok                  ; Test successful
+	bsr	testok                  ; Test successful
 .exit	move.w	drive,-(sp)             ; Switch back to test drive
-	gemdos	Dsetdrv,2               ;
+	gemdos	Dsetdrv,4               ;
 
-	move.l	drvmask,d1              ; TOS must return drive mask in any case
-	cmp.l	d1,d0                   ;
+	cmp.l	drvmask,d0              ; TOS must return drive mask in any case
 	bne.b	.err                    ;
 
 	rts	                        ; End of test
 	
 .err	print	.reterr
 
-.desc	dc.b	'Test Dsetdrv on an unknown drive',13,10,0
-.nfree	dc.b	7,'No free drive letter found',13,10,0
-.reterr	dc.b	'Dsetdrv returned an error. Should return a drive mask',13,10,0
+.desc	dc.b	'Test Dsetdrv',$0d,$0a
+	dc.b	0
+
+.nfree	dc.b	7,'No free drive letter found',$0d,$0a
+	dc.b	0
+
+.reterr	dc.b	'Dsetdrv returned an error.',$0d,$0a
+	dc.b	'Should return a drive mask',$0d,$0a
+	dc.b	0
+
+	even
 
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80

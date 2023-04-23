@@ -14,54 +14,63 @@
 ; You should have received a copy of the GNU General Public License
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+	; Include all tests
+	include	tdsetdrv.s
+	include	tdsetpth.s
+
+	include	tui.s
+
 main:
+	move.l	sp,mainsp               ; Used for abort
+
 	gemdos	Dgetdrv,2               ; Query drive mask
 	move.l	d0,-(sp)                ;
 	gemdos	Dsetdrv,6               ;
 	move.l	d0,drvmask              ;
 	
-	print	drvltrq                 ; Welcome screen. Ask for a drive letter
-	bsr.b	.ltrq                   ;
+	print	.drvlrq                 ; Welcome screen. Ask for a drive letter
+	bsr	.ltrq                   ;
+	move.w	d0,tstdrv               ; Store wanted drive letter
 
-	cmp.w	#$ffff,d0               ; If pressed escape
-	bne.b	.nesc                   ;
-	rts	                        ; Exit program
-.nesc
-	move.w	d0,drive                ; Store wanted drive letter
-	add.b	#'A',d0                 ;
-	move.w	d0,drvlttr              ; Store drive letter
-
-	print	usedrv                  ; Print selected drive letter
-	move.w	drvlttr,-(sp)           ;
-	gemdos	Cconout,4               ;
-	print	usedrv2                 ;
-
-	print	refltrq                 ; Ask for a reference drive letter
-	bsr.b	.ltrq                   ;
-
+	print	.reflrq                 ; Ask for a reference drive letter
+	bsr	.ltrq                   ;
 	move.w	d0,refdrv               ; Store wanted drive letter
-	add.b	#'A',d0                 ;
-	move.w	d0,reflttr              ; Store drive letter
-
-	print	usedrv                  ; Print selected drive letter
-	move.w	reflttr,-(sp)           ;
-	gemdos	Cconout,4               ;
-	print	usedrv2                 ;
 
 	; Do the actual tests
-	bsr.w	unkdrive
+	move.w	tstdrv,drive
+	bsr	tdsetdrv
+	bsr	tdsetpth
+
+	; End of tests
+	print	.reslt1
+
+	move.w	success,d0              ; Print successful tests count
+	ext.l	d0                      ;
+	moveq	#1,d1                   ;
+	bsr	tui.puint               ;
+
+	print	.reslt2
+
+	move.w	failed,d0               ; Print failed tests count
+	ext.l	d0                      ;
+	moveq	#1,d1                   ;
+	bsr	tui.puint               ;
+	print	.reslt3                 ;
+
+.wkey	gemdos	Cconis,2                ; Flush keyboard buffer
+	tst.w	d0                      ;
+	bne	.wkey                   ;
+	gemdos	Cnecin,2                ; Wait for a key
 
 	rts
 
 .ltrq	gemdos	Cconis,2                ; Flush keyboard buffer
 	tst.w	d0                      ;
-	bne.b	.ltrq                   ;
+	bne	.ltrq                   ;
 	gemdos	Cnecin,2                ; Read drive letter
 
 	cmp.b	#$1b,d0                 ; Exit if pressed Esc
-	bne.b	.nesc                   ;
-	moveq	#-1,d0                  ; Return invalid drive
-	rts	                        ;
+	beq	abort                   ;
 
 .nesc	cmp.b	#'a',d0                 ; Change to upper case
 	bmi.b	.upper                  ;
@@ -71,44 +80,86 @@ main:
 	and.w	#$00ff,d0               ;
 
 	cmp.w	#26,d0                  ; Check if it is a valid letter
-	bhs.b	.ltrq                   ; Not a letter: try again
+	bhs	.ltrq                   ; Not a letter: try again
 
 	move.l	drvmask,d1              ; Check if the drive actually exists
 	btst	d0,d1                   ;
-	beq.b	.ltrq                   ;
+	beq	.ltrq                   ;
+
+	move.w	d0,-(sp)                ; Temp storage
+	add.b	#'A',d0                 ; Print selected drive letter
+	move.w	d0,-(sp)                ;
+	print	.usedr1                 ;
+	gemdos	Cconout,4               ;
+	print	.usedr2                 ;
+	move.w	(sp)+,d0                ; Restore d0
 
 	rts	                        ; Success
 
-
-testok:
-	move.w	success,d0
-	addq	#1,d0
-	move.w	d0,success
-	print	succss
-	rts
-
-testfailed:
-	move.w	failed,d0
-	addq	#1,d0
-	move.w	d0,failed
-	rts
-
-drvltrq	dc.b	'GEMDOS file functions tester v'
+.drvlrq	dc.b	$1b,'E','GEMDOS file functions tester v'
 	incbin	..\..\VERSION
-	dc.b	13,10,'by Jean-Matthieu Coulon',13,10
-	dc.b	'https://github.com/retro16/acsi2stm',13,10
-	dc.b	'License: GPLv3',13,10
-	dc.b	13,10
-	dc.b	'Tests file system functions on a drive.',13,10
-	dc.b	'The drive must be empty (no files).',13,10
-	dc.b	13,10
-	dc.b	'Please input the drive letter to test:',13,10
+	dc.b	$0d,$0a,'by Jean-Matthieu Coulon',$0d,$0a
+	dc.b	'https://github.com/retro16/acsi2stm',$0d,$0a
+	dc.b	'License: GPLv3',$0d,$0a
+	dc.b	$0d,$0a
+	dc.b	'Tests file system functions on a drive.',$0d,$0a
+	dc.b	'The drive must be empty (no files).',$0d,$0a
+	dc.b	$0d,$0a
+	dc.b	'Please input the drive letter to test:',$0d,$0a
+	dc.b	$1b,'e'
 	dc.b	0
 
-usedrv	dc.b	13,10,'Testing on drive ',0
-usedrv2	dc.b	':',13,10,0
+.reflrq	dc.b	'Please input a reference drive letter:',$0d,$0a
+	dc.b	0
 
-succss	dc.b	' -> successful',13,10,0
+.usedr1	dc.b	$1b,'f','Using drive ',0
+.usedr2	dc.b	':',$0d,$0a,$0a
+	dc.b	0
+
+.reslt1	dc.b	'________________________________________',$0d,$0a,$0a
+	dc.b	'Test results:',$0d,$0a,$0a
+	dc.b	'  ',0
+.reslt2	dc.b	' successful tests',$0d,$0a
+	dc.b	'  ',0
+.reslt3	dc.b	' failed tests',$0d,$0a
+	dc.b	0
+
+	even
+
+testok:
+	add.w	#1,success
+	print	.succss
+	rts
+
+.succss	dc.b	' -> successful',$0d,$0a
+	dc.b	$0a
+	dc.b	0
+
+	even
+
+testfailed:
+	add.w	#1,failed
+	print	.fail
+	rts
+
+.fail	dc.b	' -> failed',$0d,$0a
+	dc.b	$0a
+	dc.b	0
+
+	even
+
+abort:
+	move.l	mainsp,sp               ; Restore main stack pointer
+	print	.abort                  ; Print a message
+.wkey	gemdos	Cconis,2                ; Flush keyboard buffer
+	tst.w	d0                      ;
+	bne	.wkey                   ;
+	gemdos	Cnecin,2                ; Wait for a key
+	rts	                        ; Exit from main
+
+.abort	dc.b	$0d,$0a,7,'Program aborted',$0d,$0a
+	dc.b	0
+
 	even
 
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80

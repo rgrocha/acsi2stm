@@ -17,37 +17,45 @@
 ; Test suite for ACSI2STM >= 4.0
 
 	incdir	..\inc\
+
+	; Include declarations
 	include	tos.i
 
-	opt	O+
+	; Of course, we want optimized code ! Who doesn't ?
+	opt	O+                      ; Enable all optimizations
+	opt	OW1-                    ; Disable branch optim warnings
+	opt	D+                      ; Enable debugging symbols
 
 	text
-start
-	lea	stacktop,sp             ; Initialize stack
+
+_start:	; Standard code preamble
+
+	lea	_stacktop,sp            ; Initialize stack
 
 	move.l	sp,d0                   ; Shrink memory
-	lea	start-$100,a0           ;
+	lea	_start-$100,a0          ;
 	sub.l	a0,d0                   ;
 	move.l	d0,-(sp)                ;
-	pea	start-$100              ;
+	pea	_start-$100             ;
 	clr.w	-(sp)                   ;
 	gemdos	Mshrink,12              ;
 
+	bsr	main                    ; Call main
+	Pterm0	                        ; Exit cleanly
+
+	; Include main files
 	include	main.s
 	even
-	include	unkdrive.s
+	data
+	include	data.s
+	even
+	bss
+	include	bss.s
 	even
 
-	data
-
-	include	data.s
-
-	bss
-
-	include	bss.s
-
-stack:
+_stack:	; Put stack in BSS, after everything else
 	ds.b	4096
-stacktop:
+_stacktop:
+	end
 
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80
