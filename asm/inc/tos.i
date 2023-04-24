@@ -66,11 +66,11 @@ pchar2	macro	; Print 2 characters
 	endm
 
 crlf	macro
-	pchar2	13,10
+	pchar2	$0d,$0a
 	endm
 
 bell	macro	; Ring the bell
-	pchar	7
+	pchar	$07
 	endm
 
 escape	macro	; Print an escape code
@@ -186,6 +186,7 @@ EUNDEV=-15      ; Unknown device
 EBADSF=-16      ; bad sectors on format
 EOTHER=-17      ; insert other disk
 EFILNF=-33      ; file not found
+EPTHNF=-34      ; path not found
 ENSAME=-48      ; not the same drive
 EPLFMT=-66      ; invalid program load format
 

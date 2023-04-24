@@ -21,34 +21,32 @@ tdsetdrv:
 
 	move.l	drvmask,d0              ; Load drive mask
 
-	moveq	#2,d1                   ; Search for a non-existing drive
+	lea	.nfree,a5               ; Search for a non-existing drive
+	moveq	#2,d1                   ;
 .nxtdrv	btst	d1,d0                   ;
 	beq.b	.drvok                  ;
 	addq	#1,d1                   ;
-	cmp.w	#26,d1                  ;
-	bhs.b	.ndrv                   ;
-	bra	.nxtdrv                 ;
 
-.ndrv	print	.nfree                  ; No drive free
-	bsr.w	testfailed              ;
-	bra	.exit                   ;
+	cmp.w	#26,d1                  ; Test if out of letters
+	bhs	testfailed              ;
+
+	bra	.nxtdrv                 ;
 
 .drvok	move.w	d1,-(sp)                ; Try to switch to the non-existing
 	gemdos	Dsetdrv,4               ; drive
 
-	cmp.l	drvmask,d0              ; TOS must return drive mask in any case
-	bne.b	.err                    ;
+	lea	.reterr,a5              ; Check return values
 
-	bsr	testok                  ; Test successful
-.exit	move.w	drive,-(sp)             ; Switch back to test drive
+	cmp.l	drvmask,d0              ; TOS must return drive mask in any case
+	bne	testfailed              ;
+
+	move.w	drive,-(sp)             ; Switch back to test drive
 	gemdos	Dsetdrv,4               ;
 
 	cmp.l	drvmask,d0              ; TOS must return drive mask in any case
-	bne.b	.err                    ;
+	bne	testfailed              ;
 
-	rts	                        ; End of test
-	
-.err	print	.reterr
+	bra	testok                  ; Test successful
 
 .desc	dc.b	'Test Dsetdrv',$0d,$0a
 	dc.b	0

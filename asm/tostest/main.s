@@ -17,6 +17,7 @@
 	; Include all tests
 	include	tdsetdrv.s
 	include	tdsetpth.s
+	include	tdcreate.s
 
 	include	tui.s
 
@@ -40,6 +41,7 @@ main:
 	move.w	tstdrv,drive
 	bsr	tdsetdrv
 	bsr	tdsetpth
+	bsr	tdcreate
 
 	; End of tests
 	print	.reslt1
@@ -57,17 +59,11 @@ main:
 	bsr	tui.puint               ;
 	print	.reslt3                 ;
 
-.wkey	gemdos	Cconis,2                ; Flush keyboard buffer
-	tst.w	d0                      ;
-	bne	.wkey                   ;
 	gemdos	Cnecin,2                ; Wait for a key
 
 	rts
 
-.ltrq	gemdos	Cconis,2                ; Flush keyboard buffer
-	tst.w	d0                      ;
-	bne	.ltrq                   ;
-	gemdos	Cnecin,2                ; Read drive letter
+.ltrq	gemdos	Cnecin,2                ; Read drive letter
 
 	cmp.b	#$1b,d0                 ; Exit if pressed Esc
 	beq	abort                   ;
@@ -127,8 +123,12 @@ main:
 	even
 
 testok:
-	add.w	#1,success
-	print	.succss
+	move.l	mainsp,sp               ; Adjust stack for the test return addr
+	subq	#4,sp                   ;
+
+	add.w	#1,success              ; Success counter
+	print	.succss                 ; Print result
+
 	rts
 
 .succss	dc.b	' -> successful',$0d,$0a
@@ -138,8 +138,13 @@ testok:
 	even
 
 testfailed:
-	add.w	#1,failed
-	print	.fail
+	move.l	mainsp,sp               ; Adjust stack for the test return addr
+	subq	#4,sp                   ;
+
+	add.w	#1,failed               ; Increment failure counter
+	print	(a5)                    ; Print error message
+	print	.fail                   ;
+
 	rts
 
 .fail	dc.b	' -> failed',$0d,$0a
@@ -150,10 +155,8 @@ testfailed:
 
 abort:
 	move.l	mainsp,sp               ; Restore main stack pointer
-	print	.abort                  ; Print a message
-.wkey	gemdos	Cconis,2                ; Flush keyboard buffer
-	tst.w	d0                      ;
-	bne	.wkey                   ;
+	print	(a5)                    ; Print error message
+	print	.abort                  ;
 	gemdos	Cnecin,2                ; Wait for a key
 	rts	                        ; Exit from main
 
