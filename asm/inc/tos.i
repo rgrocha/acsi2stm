@@ -59,22 +59,13 @@ pchar	macro	; Print a character
 	addq.l	#4,sp
 	endm
 
-pchar2	macro	; Print 2 characters
-	move.l	#(\2)!((\1)<<16),-(sp)
-	gemdos	Cconout,4
-	gemdos	Cconout,4
-	endm
-
 crlf	macro
-	pchar2	$0d,$0a
+	pchar	$0d
+	pchar	$0a
 	endm
 
 bell	macro	; Ring the bell
 	pchar	$07
-	endm
-
-escape	macro	; Print an escape code
-	pchar2	$1b,\1
 	endm
 
 ask	macro	; Ask: print a message, wait for a key and print its character
@@ -111,11 +102,12 @@ Ptermres=49
 Dcreate=57
 Ddelete=58
 Dsetpath=59
+Fcreate=60
 Fopen=61
 Fclose=62
 Fread=63
 Fwrite=64
-Fdelete=64
+Fdelete=65
 Fdup=69
 Fforce=70
 Dgetpath=71
@@ -187,6 +179,9 @@ EBADSF=-16      ; bad sectors on format
 EOTHER=-17      ; insert other disk
 EFILNF=-33      ; file not found
 EPTHNF=-34      ; path not found
+EACCDN=-36      ; access denied
+EBADF=-37       ; bad file descriptor
+ECWD=-47        ; current dir cannot be deleted
 ENSAME=-48      ; not the same drive
 EPLFMT=-66      ; invalid program load format
 

@@ -15,6 +15,7 @@
 ; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ; Test suite for ACSI2STM >= 4.0
+; Tests TOS / GEMDOS filesystem functions
 
 	incdir	..\inc\
 

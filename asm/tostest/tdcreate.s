@@ -29,11 +29,26 @@ tdcreate:
 	lea	.subrel,a0              ; Test relative subdirectory
 	bsr	.create                 ;
 
+	lea	.topdir,a0              ; Test delete relative subdirectory
+	bsr	.cd                     ;
+	lea	.subrel,a0              ;
+	bsr	.delete                 ;
+
 	lea	.sdir2,a0               ; Test absolute subdirectory
 	bsr	.create                 ;
 
+	lea	.topdir,a0              ; Test delete relative subdirectory
+	bsr	.cd                     ; with trailing backspace
+	lea	.subbs,a0               ;
+	bsr	.delete                 ;
+
 	lea	.up,a0                  ; Test relative to parent
 	bsr	.create                 ;
+
+	lea	.sdir2,a0               ; Test delete relative to parent
+	bsr	.cd                     ;
+	lea	.up,a0                  ;
+	bsr	.delete                 ;
 
 	lea	.topdir,a0              ; Test with lower case
 	bsr	.cd                     ;
@@ -43,10 +58,25 @@ tdcreate:
 	bsr	.cd                     ;
 	bne	testfailed              ;
 
-	bsr	.clean                  ; Test missing parent
-	lea	.sdir2,a0               ;
+
+	moveq	#EACCDN,d5              ;
+
+	lea	.root,a0                ; Test non-empty directory
+	bsr	.cd                     ;
+	lea	.topdir,a0              ;
+	bsr	.delete                 ;
+
+
 	moveq	#EPTHNF,d5              ;
+
+	bsr	.clean                  ; Cleanup to test non-existing paths
+
+	lea	.sdir2,a0               ; Test missing directory
 	bsr	.create                 ;
+
+	lea	.sdir2,a0               ; Test missing directory
+	bsr	.delete                 ;
+
 
 	bra	testok
 
@@ -118,7 +148,7 @@ tdcreate:
 	gemdos	Cconws,2                ; Leave the path pointer on stack
 	crlf	                        ;
 
-	gemdos	Ddelete,2               ; Delete directory
+	gemdos	Ddelete,6               ; Delete directory
 
 	cmp.w	d0,d5                   ; Check that the error is what we
 	bne	testfailed              ; expected

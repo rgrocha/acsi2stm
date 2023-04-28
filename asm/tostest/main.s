@@ -18,6 +18,7 @@
 	include	tdsetdrv.s
 	include	tdsetpth.s
 	include	tdcreate.s
+	include	tfcropen.s
 
 	include	tui.s
 
@@ -42,6 +43,7 @@ main:
 	bsr	tdsetdrv
 	bsr	tdsetpth
 	bsr	tdcreate
+	bsr	tfcropen
 
 	; End of tests
 	print	.reslt1
