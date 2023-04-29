@@ -60,8 +60,10 @@ pchar	macro	; Print a character
 	endm
 
 crlf	macro
+	movem.l	d0-d2/a0-a2,-(sp)
 	pchar	$0d
 	pchar	$0a
+	movem.l	(sp)+,d0-d2/a0-a2
 	endm
 
 bell	macro	; Ring the bell
@@ -108,6 +110,7 @@ Fclose=62
 Fread=63
 Fwrite=64
 Fdelete=65
+Fseek=66
 Fdup=69
 Fforce=70
 Dgetpath=71
@@ -183,6 +186,7 @@ EACCDN=-36      ; access denied
 EBADF=-37       ; bad file descriptor
 ECWD=-47        ; current dir cannot be deleted
 ENSAME=-48      ; not the same drive
+ERANGE=-64      ; seek out of range
 EPLFMT=-66      ; invalid program load format
 
 ; Structures

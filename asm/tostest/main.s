@@ -19,6 +19,7 @@
 	include	tdsetpth.s
 	include	tdcreate.s
 	include	tfcropen.s
+	include	tfileio.s
 
 	include	tui.s
 
@@ -44,6 +45,7 @@ main:
 	bsr	tdsetpth
 	bsr	tdcreate
 	bsr	tfcropen
+	bsr	tfileio
 
 	; End of tests
 	print	.reslt1

@@ -28,4 +28,11 @@ failed	ds.w	1                       ; Failed tests
 ; Stack pointer at the beginning of main, used by abort
 mainsp	ds.l	1
 
+; Startup status
+strtdrv	ds.w	1                       ; Startup drive
+strtdir	ds.b	1024                    ; Startup path
+
+; Buffer
+buffer	ds.b	65536+4                 ; Big buffer for file operations
+
 ; vim: ff=dos ts=8 sw=8 sts=8 noet colorcolumn=8,41,81 ft=asm tw=80
